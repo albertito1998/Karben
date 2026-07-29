@@ -1,0 +1,1 @@
+{"type":"FeatureCollection","name":"baulager","source":"Nominatim geocode / user supplied address","features":[{"type":"Feature","properties":{"name":"Lieferort / Baulager","adresse":"Otto-Hahn-Strasse 35, 63456 Hanau","typ":"Lieferort","projekt":"Karben 042-051"},"geometry":{"type":"Point","coordinates":[8.896721,50.111146]}}]}

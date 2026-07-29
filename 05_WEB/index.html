@@ -1,51 +1,248 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Karben 042-051 WebGIS</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karben 042-051 | WebGIS Zuwegungen</title>
+  <link rel="icon" type="image/png" href="assets/elecnor-deutsch-tp.png" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <img src="assets/elecnor-deutsch-tp.png" alt="Elecnor Deutschland">
-    <div class="title">
-      <strong>Karben 042-051 | Zuwegungen WebGIS</strong>
-      <span>Bautechnik-Statik · Alberto Gomez</span>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <p>Laden der Kartendaten...</p>
+</div>
+
+<header id="header">
+  <div class="logo">
+    <img src="assets/elecnor-deutsch-tp.png" alt="Elecnor Deutschland" />
+  </div>
+  <div class="subtitle">
+    <strong>Karben 042-051 | Zuwegungen WebGIS</strong>
+    Bautechnik-Statik · REV00
+  </div>
+  <div class="deploy-status">Estado actualizado: 29.07.2026</div>
+  <div id="header-spacer"></div>
+  <div class="header-author">
+    <span class="author-name">Alberto Gomez</span>
+    <span class="author-date">29.07.2026</span>
+  </div>
+  <button id="btn-menu-toggle" onclick="toggleSidebar()" aria-label="Abrir menu">☰</button>
+</header>
+
+<div id="main">
+  <div id="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+  <nav id="sidebar">
+    <div id="sidebar-mobile-header">
+      <span>Capas / Leyenda</span>
+      <button id="btn-sidebar-close" onclick="toggleSidebar()" aria-label="Cerrar menu">x</button>
     </div>
-    <div class="deploy-status">Estado actualizado: 29.07.2026</div>
-  </header>
+    <div id="sidebar-inner">
+      <div class="section-title">Trassierung</div>
 
-  <main>
-    <aside id="sidebar">
-      <section>
-        <h2>Navigation</h2>
-        <form id="goto-form" class="goto-form">
-          <label for="goto-mast">Go To Mast</label>
-          <div class="goto-row">
-            <input id="goto-mast" list="mast-options" placeholder="z.B. 042" autocomplete="off">
-            <button type="submit">OK</button>
-          </div>
-          <datalist id="mast-options"></datalist>
-          <div id="goto-status">Apoyo eingeben oder auswählen</div>
-        </form>
-      </section>
+      <label class="layer-item" for="chk-torres">
+        <input type="checkbox" id="chk-torres" checked />
+        <span class="layer-legend">
+          <span class="dot" style="background:#e63030;"></span>
+          <span class="dot" style="background:#3a7bd5;"></span>
+        </span>
+        <span>Apoyos / Masten</span>
+        <em data-count="masten">-</em>
+      </label>
 
-      <section>
-        <h2>Layer</h2>
-        <div id="layer-list"></div>
-      </section>
-    </aside>
-    <div id="map"></div>
-  </main>
+      <label class="layer-item" for="chk-eje">
+        <input type="checkbox" id="chk-eje" checked />
+        <span class="layer-swatch" style="background:#e63030;"></span>
+        <span>Eje de Linea (Trassenachse)</span>
+        <em data-count="leitung">-</em>
+      </label>
 
-  <footer>
-    <span id="coords">Lat/Lon: - · UTM32: -</span>
-  </footer>
+      <label class="layer-item" for="chk-erdung">
+        <input type="checkbox" id="chk-erdung" />
+        <span class="erdung-swatch">E</span>
+        <span>Erdungskonzept Seilzug</span>
+        <em data-count="erdungskonzept">-</em>
+      </label>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
-  <script src="app.js"></script>
+      <label class="layer-item" for="chk-buffer">
+        <input type="checkbox" id="chk-buffer" checked />
+        <span class="layer-swatch" style="background:#e6303020;border:2px solid #e63030;"></span>
+        <span>Buffer 800 m</span>
+        <em data-count="buffer">-</em>
+      </label>
+
+      <label class="layer-item" for="chk-rettung">
+        <input type="checkbox" id="chk-rettung" checked />
+        <span class="rescue-swatch"><span class="rescue-cross"></span></span>
+        <span>Rettungspunkte</span>
+        <em data-count="rettungspunkte">-</em>
+      </label>
+
+      <label class="layer-item" for="chk-baulager">
+        <input type="checkbox" id="chk-baulager" checked />
+        <span class="warehouse-swatch"></span>
+        <span>Almacenes / Baulager</span>
+        <em data-count="baulager">-</em>
+      </label>
+
+      <label class="layer-item" for="chk-toitoi">
+        <input type="checkbox" id="chk-toitoi" checked />
+        <span class="toitoi-swatch">WC</span>
+        <span>ToiToi / Sanitaer</span>
+        <em data-count="toitoi">-</em>
+      </label>
+
+      <div class="tower-legend-box">
+        <div class="tl-row"><span class="tl-dot abspann"></span> Masten aus KMZ/GPKG</div>
+        <div class="tl-row"><span class="tl-dot trag"></span> Labels aus Attribut `Name`</div>
+      </div>
+
+      <div class="section-title">Zuwegungen</div>
+
+      <label class="layer-item" for="chk-weg-best">
+        <input type="checkbox" id="chk-weg-best" checked />
+        <span class="layer-swatch" style="background:#a85c00;"></span>
+        <span>Zuwegung vorhanden</span>
+        <em data-count="zuwegung_vorhanden">-</em>
+      </label>
+
+      <label class="layer-item" for="chk-weg-temp">
+        <input type="checkbox" id="chk-weg-temp" checked />
+        <span class="layer-swatch" style="background:#ff8c00;"></span>
+        <span>Zuwegung temporaer</span>
+        <em data-count="zuwegung_temporaer">-</em>
+      </label>
+
+      <label class="layer-item" for="chk-beschilderung">
+        <input type="checkbox" id="chk-beschilderung" checked />
+        <span class="sign-swatch">S</span>
+        <span>Beschilderung</span>
+        <em data-count="beschilderung">-</em>
+      </label>
+
+      <div class="section-title">Arbeitsflaechen</div>
+
+      <label class="layer-item" for="chk-arbeit">
+        <input type="checkbox" id="chk-arbeit" checked />
+        <span class="layer-swatch" style="background:#00aa44;"></span>
+        <span>Arbeitsflaechen</span>
+        <em data-count="arbeitsflaechen">-</em>
+      </label>
+
+      <label class="layer-item" for="chk-geruest">
+        <input type="checkbox" id="chk-geruest" checked />
+        <span class="layer-swatch" style="background:#aa00aa;"></span>
+        <span>Gerueste</span>
+        <em data-count="gerueste">-</em>
+      </label>
+
+      <label class="layer-item" for="chk-ausholz">
+        <input type="checkbox" id="chk-ausholz" />
+        <span class="layer-swatch" style="background:#007733;"></span>
+        <span>Ausholzung</span>
+        <em data-count="ausholzung">-</em>
+      </label>
+
+      <label class="layer-item" for="chk-schutz">
+        <input type="checkbox" id="chk-schutz" checked />
+        <span class="layer-swatch" style="background:#0055bb;"></span>
+        <span>Schutznetz / Netz</span>
+        <em data-count="netz">-</em>
+      </label>
+
+      <label class="layer-item" for="chk-sperr">
+        <input type="checkbox" id="chk-sperr" checked />
+        <span class="layer-swatch" style="background:#dd0000;"></span>
+        <span>Sperrungen</span>
+        <em data-count="sperrungen">-</em>
+      </label>
+
+      <div class="section-title">Catastro / WMS</div>
+
+      <label class="layer-item" for="chk-status-genehmigung">
+        <input type="checkbox" id="chk-status-genehmigung" />
+        <span class="layer-swatch" style="background:#22aa55;"></span>
+        <span>STATUS GENEHMIGUNG</span>
+        <em data-count="status_genehmigung">-</em>
+      </label>
+
+      <label class="wms-item" for="chk-catastro">
+        <input type="checkbox" id="chk-catastro" checked />
+        <span>Kataster Hessen WFS lokal (Buffer 800 m)</span>
+      </label>
+
+      <label class="wms-item" for="chk-naturschutz">
+        <input type="checkbox" id="chk-naturschutz" />
+        <span>Naturschutzgebiete Hessen</span>
+      </label>
+
+      <label class="wms-item" for="chk-ffh">
+        <input type="checkbox" id="chk-ffh" />
+        <span>FFH-Gebiete Hessen</span>
+      </label>
+
+      <label class="wms-item" for="chk-vogel">
+        <input type="checkbox" id="chk-vogel" />
+        <span>Vogelschutzgebiete Hessen</span>
+      </label>
+
+      <label class="wms-item" for="chk-landschaft">
+        <input type="checkbox" id="chk-landschaft" />
+        <span>Landschaftsschutz Hessen</span>
+      </label>
+
+      <label class="wms-item" for="chk-biotop">
+        <input type="checkbox" id="chk-biotop" />
+        <span>Biotopkataster Hessen</span>
+      </label>
+
+      <label class="wms-item" for="chk-hydro">
+        <input type="checkbox" id="chk-hydro" />
+        <span>Gewasser / Hydrographie</span>
+      </label>
+
+      <label class="wms-item" for="chk-hq100">
+        <input type="checkbox" id="chk-hq100" />
+        <span>Ueberschwemmungsgebiete HQ100</span>
+      </label>
+
+      <label class="wms-item" for="chk-wasserschutz">
+        <input type="checkbox" id="chk-wasserschutz" />
+        <span>Wasserschutz Hessen</span>
+      </label>
+
+      <div class="section-title">Basiskarte</div>
+      <button class="basemap-btn active" onclick="setBasemap('satellite', this)">Satellit (Standard)</button>
+      <button class="basemap-btn" onclick="setBasemap('topo', this)">Topographie OSM</button>
+      <button class="basemap-btn" onclick="setBasemap('osm', this)">OpenStreetMap</button>
+      <button class="basemap-btn" onclick="setBasemap('grey', this)">Grau (Planung)</button>
+
+      <div class="info-box">
+        <strong>Proyecto</strong>
+        Karben 042-051<br>
+        Leitung: LH-11-3024<br>
+        CRS GIS: EPSG:25832 / EPSG:4326<br>
+        Kataster: ALKIS Hessen WFS lokal
+      </div>
+
+      <div class="sidebar-credits">
+        <span class="credits-name">© Alberto Gomez</span>
+        <span class="credits-sub">Todos los derechos reservados · 2026</span>
+        <span class="credits-sub">Bautechnik-Statik · Karben</span>
+      </div>
+    </div>
+  </nav>
+
+  <div id="map"></div>
+</div>
+
+<div id="measure-result" class="hidden"></div>
+<div id="coords-bar">Lat: -- &nbsp; Lng: -- &nbsp; | &nbsp; UTM32N EPSG:25832 E: -- &nbsp; N: --</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

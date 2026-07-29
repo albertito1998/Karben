@@ -9,6 +9,14 @@
   "zuwegung_temporaer.geojson": 13,
   "beschilderung.geojson": 10,
   "buffer_leitung_800m.geojson": 1,
+  "catastro_flurstueck.geojson": 13953,
+  "catastro_flurstueck_overview.geojson": 13953,
   "leitung_kmz.geojson": 1,
-  "masten_kmz.geojson": 62
+  "masten_kmz.geojson": 62,
+  "toitoi.geojson": 3,
+  "baulager.geojson": 1,
+  "rettungspunkte.geojson": 0,
+  "erdungskonzept.geojson": 6,
+  "status_genehmigung.geojson": 56,
+  "ausholzung.geojson": 0
 }

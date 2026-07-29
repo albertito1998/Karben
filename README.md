@@ -48,6 +48,7 @@ GitHub Pages:
 | `02_CAD/Tragwerk.kmz` | Apoyos / masten desde KMZ. |
 | `02_CAD/LH-11-3024_Karben-Grosskrotzenburg_Zuwegungen_ordenado.qgz` | Proyecto QGIS de trabajo usado como referencia. |
 | `../01_Datos_Proyecto/*.gpkg` | GeoPackage de superficies, accesos, apoyos y buffer. |
+| ALKIS Hessen WFS `ave:Flurstueck` | Catastro descargado por teselas sobre `buffer_leitung_800m.geojson`. |
 | `05_WEB/assets/elecnor-deutsch-tp.png` | Logo copiado desde la WebGIS de Audorf-Kassoe. |
 
 ## Capas publicadas
@@ -55,6 +56,7 @@ GitHub Pages:
 Las capas se generan con:
 
 ```powershell
+py -m pip install pyproj shapely pyshp
 py 05_WEB/tools/build_layers.py
 ```
 
@@ -72,6 +74,8 @@ Conteos iniciales generados el 29.07.2026:
 | Zuwegung temporaer | `zuwegung_temporaer.geojson` | 13 |
 | Beschilderung | `beschilderung.geojson` | 10 |
 | Buffer Leitung 800m | `buffer_leitung_800m.geojson` | 1 |
+| Kataster Hessen WFS | `catastro_flurstueck.geojson` | 13953 |
+| Kataster Hessen WFS overview | `catastro_flurstueck_overview.geojson` | 13953 |
 | Leitung KMZ | `leitung_kmz.geojson` | 1 |
 | Masten KMZ | `masten_kmz.geojson` | 62 |
 
