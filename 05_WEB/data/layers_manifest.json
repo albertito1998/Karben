@@ -1,0 +1,14 @@
+{
+  "leitung.geojson": 1,
+  "masten.geojson": 62,
+  "arbeitsflaechen.geojson": 9,
+  "gerueste.geojson": 2,
+  "netz.geojson": 0,
+  "sperrungen.geojson": 0,
+  "zuwegung_vorhanden.geojson": 17,
+  "zuwegung_temporaer.geojson": 13,
+  "beschilderung.geojson": 10,
+  "buffer_leitung_800m.geojson": 1,
+  "leitung_kmz.geojson": 1,
+  "masten_kmz.geojson": 62
+}

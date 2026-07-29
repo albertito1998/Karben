@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karben 042-051 WebGIS</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <img src="assets/elecnor-deutsch-tp.png" alt="Elecnor Deutschland">
+    <div class="title">
+      <strong>Karben 042-051 | Zuwegungen WebGIS</strong>
+      <span>Bautechnik-Statik · Alberto Gomez</span>
+    </div>
+    <div class="deploy-status">Estado actualizado: 29.07.2026</div>
+  </header>
+
+  <main>
+    <aside id="sidebar">
+      <section>
+        <h2>Navigation</h2>
+        <form id="goto-form" class="goto-form">
+          <label for="goto-mast">Go To Mast</label>
+          <div class="goto-row">
+            <input id="goto-mast" list="mast-options" placeholder="z.B. 042" autocomplete="off">
+            <button type="submit">OK</button>
+          </div>
+          <datalist id="mast-options"></datalist>
+          <div id="goto-status">Apoyo eingeben oder auswählen</div>
+        </form>
+      </section>
+
+      <section>
+        <h2>Layer</h2>
+        <div id="layer-list"></div>
+      </section>
+    </aside>
+    <div id="map"></div>
+  </main>
+
+  <footer>
+    <span id="coords">Lat/Lon: - · UTM32: -</span>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
