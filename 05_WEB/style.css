@@ -433,8 +433,8 @@ body {
 }
 
 .mast-marker {
-  width: 34px !important;
-  height: 22px !important;
+  width: 38px !important;
+  height: 24px !important;
   margin: 0 !important;
   border: 2px solid #fff;
   border-radius: 5px;
@@ -446,6 +446,8 @@ body {
   font-size: 10px;
   font-weight: 900;
   box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+  cursor: pointer;
+  pointer-events: auto;
 }
 
 .toitoi-marker,
@@ -576,7 +578,7 @@ body {
   position: fixed;
   top: 72px;
   right: 16px;
-  z-index: 1800;
+  z-index: 2500;
   width: min(380px, calc(100vw - 32px));
   max-height: calc(100vh - 104px);
   overflow: auto;

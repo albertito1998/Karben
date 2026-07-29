@@ -30,9 +30,17 @@ const map = L.map('map', {
 L.control.zoom({ position: 'topright' }).addTo(map);
 L.control.scale({ imperial: false, position: 'bottomright' }).addTo(map);
 
-['catastroPane', 'logisticsPane', 'mastPane', 'overlayPane2'].forEach((name, i) => {
+const MAP_PANES = {
+  catastroPane: 430,
+  statusPane: 510,
+  logisticsPane: 560,
+  mastPane: 620,
+  overlayPane2: 680,
+};
+
+Object.entries(MAP_PANES).forEach(([name, zIndex]) => {
   map.createPane(name);
-  map.getPane(name).style.zIndex = String(430 + i * 60);
+  map.getPane(name).style.zIndex = String(zIndex);
 });
 map.createPane('catastroLabelPane');
 map.getPane('catastroLabelPane').style.zIndex = '620';
@@ -143,6 +151,7 @@ function ensureFeatureModal() {
 }
 
 function openHtmlPopup(html, latlng) {
+  lastPopupOpenedAt = Date.now();
   const modal = ensureFeatureModal();
   modal.querySelector('.feature-modal-body').innerHTML = html;
   modal.classList.remove('hidden');
@@ -520,7 +529,24 @@ map.on('mousemove', e => {
 });
 
 map.on('click', e => {
-  if (!measureActive) return;
+  if (!measureActive) {
+    if (Date.now() - lastPopupOpenedAt < 180) return;
+    const statusFeature = document.getElementById('chk-status-genehmigung')?.checked
+      ? findParcelAtLatLng(e.latlng, 'status')
+      : null;
+    if (statusFeature) {
+      const statusDef = DATA_LAYERS.find(def => def.key === 'status_genehmigung');
+      openHtmlPopup(layerPopupHtml(statusDef, statusFeature.properties || {}, e.latlng), e.latlng);
+      return;
+    }
+    const catastroFeature = document.getElementById('chk-catastro')?.checked
+      ? findParcelAtLatLng(e.latlng, 'catastro')
+      : null;
+    if (catastroFeature) {
+      openHtmlPopup(catastroPopupHtml(catastroFeature.properties || {}, e.latlng), e.latlng);
+    }
+    return;
+  }
   if (measurePts.length >= 2) clearMeasure();
   measurePts.push(e.latlng);
   const dot = L.circleMarker(e.latlng, {
@@ -556,13 +582,18 @@ const DATA_LAYERS = [
   { checkbox: 'chk-ausholz', key: 'ausholzung', label: 'Ausholzung', file: 'ausholzung.geojson', type: 'polygon', color: '#007733' },
   { checkbox: 'chk-schutz', key: 'netz', label: 'Schutznetz / Netz', file: 'netz.geojson', type: 'line', color: '#0055bb', weight: 3, checked: true },
   { checkbox: 'chk-sperr', key: 'sperrungen', label: 'Sperrungen', file: 'sperrungen.geojson', type: 'polygon', color: '#dd0000', checked: true },
-  { checkbox: 'chk-status-genehmigung', key: 'status_genehmigung', label: 'STATUS GENEHMIGUNG', file: 'status_genehmigung.geojson', type: 'polygon', color: '#22aa55', checked: true },
+  { checkbox: 'chk-status-genehmigung', key: 'status_genehmigung', label: 'STATUS GENEHMIGUNG', file: 'status_genehmigung.geojson', type: 'polygon', color: '#22aa55', checked: true, pane: 'statusPane' },
 ];
 
 const layerCache = new Map();
 const mastIndex = new Map();
 const ownerParcelIndex = new Map();
+const clickableParcelFeatures = {
+  status: [],
+  catastro: [],
+};
 const allBounds = [];
+let lastPopupOpenedAt = 0;
 
 function normalizeParcelValue(value) {
   return String(value ?? '').trim().toLowerCase().replace(/\s+/g, '');
@@ -597,6 +628,68 @@ function ownerPropsForParcel(props = {}) {
   return ownerParcelIndex.get(parcelKennzeichenKey(props)) || ownerParcelIndex.get(parcelLookupKey(props)) || props;
 }
 
+function featureBBox(geometry) {
+  const coords = [];
+  const collect = value => {
+    if (!Array.isArray(value)) return;
+    if (typeof value[0] === 'number' && typeof value[1] === 'number') {
+      coords.push(value);
+      return;
+    }
+    value.forEach(collect);
+  };
+  collect(geometry?.coordinates);
+  if (!coords.length) return null;
+  return coords.reduce((bbox, [lng, lat]) => ({
+    minLng: Math.min(bbox.minLng, lng),
+    minLat: Math.min(bbox.minLat, lat),
+    maxLng: Math.max(bbox.maxLng, lng),
+    maxLat: Math.max(bbox.maxLat, lat),
+  }), { minLng: Infinity, minLat: Infinity, maxLng: -Infinity, maxLat: -Infinity });
+}
+
+function indexClickableParcels(target, features = []) {
+  clickableParcelFeatures[target] = features
+    .filter(feature => feature.geometry && ['Polygon', 'MultiPolygon'].includes(feature.geometry.type))
+    .map(feature => ({ feature, bbox: featureBBox(feature.geometry) }))
+    .filter(item => item.bbox);
+}
+
+function pointInRing(latlng, ring) {
+  const x = latlng.lng;
+  const y = latlng.lat;
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
+    const xi = ring[i][0];
+    const yi = ring[i][1];
+    const xj = ring[j][0];
+    const yj = ring[j][1];
+    const intersects = ((yi > y) !== (yj > y)) && x < ((xj - xi) * (y - yi)) / ((yj - yi) || Number.EPSILON) + xi;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+function pointInPolygon(latlng, polygon) {
+  if (!polygon?.length || !pointInRing(latlng, polygon[0])) return false;
+  return !polygon.slice(1).some(ring => pointInRing(latlng, ring));
+}
+
+function geometryContainsLatLng(geometry, latlng) {
+  const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  return polygons.some(polygon => pointInPolygon(latlng, polygon));
+}
+
+function findParcelAtLatLng(latlng, target) {
+  return clickableParcelFeatures[target].find(({ feature, bbox }) => (
+    latlng.lng >= bbox.minLng
+    && latlng.lng <= bbox.maxLng
+    && latlng.lat >= bbox.minLat
+    && latlng.lat <= bbox.maxLat
+    && geometryContainsLatLng(feature.geometry, latlng)
+  ))?.feature || null;
+}
+
 function vectorStyle(def) {
   if (def.type === 'polygon') {
     return {
@@ -629,8 +722,8 @@ function pointToLayer(def, feature, latlng) {
       icon: L.divIcon({
         html: `<span>${escapeHtml(name)}</span>`,
         className: 'mast-marker',
-        iconSize: [34, 22],
-        iconAnchor: [17, 11],
+        iconSize: [38, 24],
+        iconAnchor: [19, 12],
         popupAnchor: [0, -12],
       }),
     });
@@ -660,9 +753,10 @@ async function loadDataLayer(def) {
       const props = feature.properties || {};
       indexOwnerParcel(props);
     });
+    indexClickableParcels('status', data.features || []);
   }
   const layer = L.geoJSON(data, {
-    pane: def.type === 'mast' ? 'mastPane' : undefined,
+    pane: def.pane || (def.type === 'mast' ? 'mastPane' : undefined),
     style: () => vectorStyle(def),
     pointToLayer: (feature, latlng) => pointToLayer(def, feature, latlng),
     onEachFeature: (feature, lyr) => {
@@ -678,7 +772,6 @@ async function loadDataLayer(def) {
         const key = String(name).trim();
         mastIndex.set(key.toLowerCase(), lyr);
         mastIndex.set(key.padStart(3, '0').toLowerCase(), lyr);
-        lyr.bindTooltip(key, { permanent: true, direction: 'top', className: 'mast-label', opacity: 0.95 });
       } else if (data.features.length > 0) {
         lyr.bindTooltip(`${def.label}: ${name}`, { sticky: true });
       }
@@ -762,11 +855,11 @@ const CATASTRO_LABEL_ZOOM = 17;
 const CATASTRO_LABEL_LIMIT = 900;
 
 function catastroStyle() {
-  return { color: '#111827', weight: 0.9, opacity: 0.95, fillColor: '#ffffff', fillOpacity: 0 };
+  return { color: '#111827', weight: 0.9, opacity: 0.95, fillColor: '#ffffff', fillOpacity: 0.01 };
 }
 
 function catastroOverviewStyle() {
-  return { color: '#111827', weight: 0.75, opacity: 0.86, fillOpacity: 0 };
+  return { color: '#111827', weight: 0.75, opacity: 0.86, fillColor: '#ffffff', fillOpacity: 0.01 };
 }
 
 function catastroNumber(props = {}) {
@@ -843,6 +936,7 @@ async function ensureCatastro() {
   const response = await fetch('data/catastro_flurstueck.geojson');
   if (!response.ok) throw new Error(`catastro_flurstueck.geojson: HTTP ${response.status}`);
   const data = await response.json();
+  indexClickableParcels('catastro', data.features || []);
   catastroLabels = [];
   catastroLayer = L.geoJSON(data, {
     pane: 'catastroPane',
