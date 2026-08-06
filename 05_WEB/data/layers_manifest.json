@@ -6,7 +6,7 @@
   "netz.geojson": 0,
   "sperrungen.geojson": 0,
   "zuwegung_vorhanden.geojson": 17,
-  "zuwegung_temporaer.geojson": 13,
+  "zuwegung_temporaer.geojson": 14,
   "beschilderung.geojson": 10,
   "buffer_leitung_800m.geojson": 1,
   "catastro_flurstueck.geojson": 13953,

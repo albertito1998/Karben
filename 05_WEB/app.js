@@ -19,6 +19,8 @@ const BASEMAPS = {
   ),
 };
 
+const DATA_VERSION = '20260806';
+
 const map = L.map('map', {
   center: [50.17, 8.83],
   zoom: 13,
@@ -744,7 +746,7 @@ function pointToLayer(def, feature, latlng) {
 
 async function loadDataLayer(def) {
   if (layerCache.has(def.key)) return layerCache.get(def.key);
-  const response = await fetch(`data/${def.file}`);
+  const response = await fetch(`data/${def.file}?v=${DATA_VERSION}`);
   if (!response.ok) throw new Error(`${def.file}: HTTP ${response.status}`);
   const data = await response.json();
   if (def.key === 'status_genehmigung') {
@@ -933,7 +935,7 @@ function updateCatastroLabels() {
 async function ensureCatastro() {
   if (catastroLayer || catastroLoading) return catastroLayer;
   catastroLoading = true;
-  const response = await fetch('data/catastro_flurstueck.geojson');
+  const response = await fetch(`data/catastro_flurstueck.geojson?v=${DATA_VERSION}`);
   if (!response.ok) throw new Error(`catastro_flurstueck.geojson: HTTP ${response.status}`);
   const data = await response.json();
   indexClickableParcels('catastro', data.features || []);
@@ -964,7 +966,7 @@ async function ensureCatastro() {
 async function ensureCatastroOverview() {
   if (catastroOverviewLayer || catastroOverviewLoading) return catastroOverviewLayer;
   catastroOverviewLoading = true;
-  const response = await fetch('data/catastro_flurstueck_overview.geojson');
+  const response = await fetch(`data/catastro_flurstueck_overview.geojson?v=${DATA_VERSION}`);
   if (!response.ok) throw new Error(`catastro_flurstueck_overview.geojson: HTTP ${response.status}`);
   const data = await response.json();
   catastroOverviewLayer = L.geoJSON(data, {
