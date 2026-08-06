@@ -6,7 +6,7 @@
   <title>Karben 042-051 | WebGIS Zuwegungen</title>
   <link rel="icon" type="image/png" href="assets/elecnor-deutsch-tp.png" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css?v=20260806" />
+  <link rel="stylesheet" href="style.css?v=20260806-autocad" />
 </head>
 <body>
 
@@ -121,6 +121,15 @@
         <span class="sign-swatch">S</span>
         <span>Beschilderung</span>
         <em data-count="beschilderung">-</em>
+      </label>
+
+      <div class="section-title">CAD</div>
+
+      <label class="layer-item" for="chk-autocad">
+        <input type="checkbox" id="chk-autocad" />
+        <span class="layer-swatch" style="background:#ffd400;"></span>
+        <span>AUTOCAD / Grua Richard</span>
+        <em data-count="autocad_dxf">-</em>
       </label>
 
       <div class="section-title">Arbeitsflaechen</div>
@@ -243,6 +252,6 @@
 <div id="coords-bar">Lat: -- &nbsp; Lng: -- &nbsp; | &nbsp; UTM32N EPSG:25832 E: -- &nbsp; N: --</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?v=20260806"></script>
+<script src="app.js?v=20260806-autocad"></script>
 </body>
 </html>

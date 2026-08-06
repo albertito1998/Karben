@@ -19,7 +19,7 @@ const BASEMAPS = {
   ),
 };
 
-const DATA_VERSION = '20260806';
+const DATA_VERSION = '20260806-autocad';
 
 const map = L.map('map', {
   center: [50.17, 8.83],
@@ -579,6 +579,7 @@ const DATA_LAYERS = [
   { checkbox: 'chk-weg-best', key: 'zuwegung_vorhanden', label: 'Zuwegung vorhanden', file: 'zuwegung_vorhanden.geojson', type: 'polygon', color: '#7c3aed', weight: 2, checked: true, opacity: 1 },
   { checkbox: 'chk-weg-temp', key: 'zuwegung_temporaer', label: 'Zuwegung temporaer', file: 'zuwegung_temporaer.geojson', type: 'polygon', color: '#ff2d95', weight: 2, checked: true, opacity: 1 },
   { checkbox: 'chk-beschilderung', key: 'beschilderung', label: 'Beschilderung', file: 'beschilderung.geojson', type: 'point', color: '#e11d48', checked: true },
+  { checkbox: 'chk-autocad', key: 'autocad_dxf', label: 'AUTOCAD / Grua Richard', file: 'autocad_dxf.geojson', type: 'line', color: '#ffd400', weight: 2 },
   { checkbox: 'chk-arbeit', key: 'arbeitsflaechen', label: 'Arbeitsflaechen', file: 'arbeitsflaechen.geojson', type: 'polygon', color: '#00d4ff', weight: 2, checked: true, opacity: 1 },
   { checkbox: 'chk-geruest', key: 'gerueste', label: 'Gerueste', file: 'gerueste.geojson', type: 'polygon', color: '#aa00aa', checked: true },
   { checkbox: 'chk-ausholz', key: 'ausholzung', label: 'Ausholzung', file: 'ausholzung.geojson', type: 'polygon', color: '#007733' },

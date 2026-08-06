@@ -18,5 +18,6 @@
   "rettungspunkte.geojson": 0,
   "erdungskonzept.geojson": 6,
   "status_genehmigung.geojson": 56,
-  "ausholzung.geojson": 0
+  "ausholzung.geojson": 0,
+  "autocad_dxf.geojson": 3576
 }

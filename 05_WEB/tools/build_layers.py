@@ -14,6 +14,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from openpyxl import load_workbook
+import ezdxf
 import shapefile
 from pyproj import Transformer
 from shapely import wkb
@@ -42,6 +43,8 @@ KMZ_LAYERS = [
     ("02_CAD/Leitung.kmz", "leitung_kmz.geojson"),
     ("02_CAD/Tragwerk.kmz", "masten_kmz.geojson"),
 ]
+
+AUTOCAD_DXF = ("../03_Recursos/Grua Richard.dxf", "autocad_dxf.geojson")
 
 CATASTRO_OVERVIEW_PROPS = {
     "flstnrzae",
@@ -195,6 +198,62 @@ def convert_kmz(kmz_path: Path, output_name: str) -> int:
         "source": str(kmz_path),
         "features": features,
     }, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    return len(features)
+
+
+def convert_autocad_dxf(dxf_path: Path, output_name: str) -> int:
+    doc = ezdxf.readfile(dxf_path)
+    transformer = Transformer.from_crs("EPSG:25832", "EPSG:4326", always_xy=True)
+    features = []
+
+    def to_wgs84(point):
+        lng, lat = transformer.transform(float(point[0]), float(point[1]))
+        return [lng, lat]
+
+    def add_feature(geometry_type: str, coordinates, entity, extra=None):
+        props = {
+            "layer": entity.dxf.layer,
+            "entity": entity.dxftype(),
+        }
+        if extra:
+            props.update(extra)
+        features.append({
+            "type": "Feature",
+            "properties": props,
+            "geometry": {"type": geometry_type, "coordinates": coordinates},
+        })
+
+    def polyline_points(entity):
+        if entity.dxftype() == "LWPOLYLINE":
+            return [(point[0], point[1]) for point in entity.get_points()]
+        return [(vertex.dxf.location.x, vertex.dxf.location.y) for vertex in entity.vertices]
+
+    for entity in doc.modelspace():
+        entity_type = entity.dxftype()
+        if entity_type == "LINE":
+            add_feature("LineString", [to_wgs84(entity.dxf.start), to_wgs84(entity.dxf.end)], entity)
+        elif entity_type in ("POLYLINE", "LWPOLYLINE"):
+            points = polyline_points(entity)
+            if len(points) < 2:
+                continue
+            coords = [to_wgs84(point) for point in points]
+            if entity.is_closed and coords[0] != coords[-1]:
+                coords.append(coords[0])
+            add_feature("LineString", coords, entity, {"closed": bool(entity.is_closed)})
+        elif entity_type == "CIRCLE":
+            center = entity.dxf.center
+            radius = float(entity.dxf.radius)
+            coords = [
+                to_wgs84((center.x + radius * math.cos(angle), center.y + radius * math.sin(angle)))
+                for angle in [2 * math.pi * index / 48 for index in range(49)]
+            ]
+            add_feature("LineString", coords, entity, {"radius": radius})
+        elif entity_type in ("TEXT", "MTEXT"):
+            insert = entity.dxf.insert
+            text = entity.dxf.text if entity_type == "TEXT" else entity.text
+            add_feature("Point", to_wgs84(insert), entity, {"text": text})
+
+    write_geojson(output_name, features, str(dxf_path))
     return len(features)
 
 
@@ -501,6 +560,8 @@ def main() -> None:
     for source, output in KMZ_LAYERS:
         path = (ROOT / source).resolve()
         counts[output] = convert_kmz(path, output)
+    dxf_source, dxf_output = AUTOCAD_DXF
+    counts[dxf_output] = convert_autocad_dxf((ROOT / dxf_source).resolve(), dxf_output)
     counts.update(build_logistics_layers())
     (DATA_DIR / "layers_manifest.json").write_text(
         json.dumps(counts, ensure_ascii=False, indent=2),
