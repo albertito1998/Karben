@@ -19,7 +19,7 @@ const BASEMAPS = {
   ),
 };
 
-const DATA_VERSION = '20260806-autocad';
+const DATA_VERSION = '20260806-qgis-update';
 
 const map = L.map('map', {
   center: [50.17, 8.83],
